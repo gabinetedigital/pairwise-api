@@ -21,7 +21,7 @@ describe Choice do
     
     @valid_attributes = {
       :creator => @visitor,
-      :question => @question,
+      :question_id => @question.id,
       :data => 'hi there'
     }
 
@@ -67,11 +67,37 @@ describe Choice do
 	  question = Factory.create(:question, :site => @aoi_clone, :creator => @visitor)
 	  question.choices_count.should == 0
 	  question.choices.size.should == 0
-          Choice.create!(@valid_attributes.merge(:question => question))
+          Choice.create!(@valid_attributes.merge(:question_id => question.id))
 	  question.reload
 	  question.choices_count.should == 1
 	  question.choices.size.should == 1
-	
+  end
+
+  it "should update a question's counter cache on update" do
+	  # not an allour ideas question
+	  question = Factory.create(:question, :site => @aoi_clone, :creator => @visitor)
+	  question.choices_count.should == 0
+	  question.choices.size.should == 0
+    c = Choice.create!(@valid_attributes.merge(:question_id => question.id))
+    c.update_attributes!(:question_id => question.id)
+	  question.reload
+	  question.choices_count.should == 1
+	  question.choices.size.should == 1
+  end
+
+  it "should be able to change category" do
+    choice = Choice.create!(@valid_attributes)
+    new_question = Factory.create(:question)
+    choice.update_attributes!(:question_id => new_question.id)
+    choice.reload.question_id.should == new_question.id
+  end
+
+  it "shouldn't be able to change category if it already have votes" do
+    choice = Choice.create!(@valid_attributes)
+    choice.stub!(:has_votes?).and_return(true)
+    new_question = Factory.create(:question)
+    choice.update_attributes!(:question_id => new_question.id)
+    choice.reload.question_id.should == @question.id
   end
 
   it "should update a question's counter cache on activation" do
@@ -156,6 +182,16 @@ describe Choice do
 	  @losing_choice.reload
           @losing_choice.wins.should == 0
           @losing_choice.losses.should == 1
+     end
+     it "should have votes, if it either lost or won" do
+       @winning_choice.reload.has_votes?.should be_true
+       @losing_choice.reload.has_votes?.should be_true
+     end
+     it "shouldn't have votes if it never won or lost" do
+       choice = Factory.build(:choice)
+       choice.wins.should == 0
+       choice.losses.should == 0
+       choice.has_votes?.should be_false
      end
   end
 end

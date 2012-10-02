@@ -1,7 +1,7 @@
 class Choice < ActiveRecord::Base
   acts_as_versioned
   
-  belongs_to :question, :counter_cache => true
+  belongs_to :question
   belongs_to :creator, :class_name => "Visitor", :foreign_key => "creator_id"
   
   validates_presence_of :creator, :on => :create, :message => "can't be blank"
@@ -26,18 +26,32 @@ class Choice < ActiveRecord::Base
     { :conditions => ["creator_id <> ?", creator_id] }
   }
  
+  before_save :cant_change_question_if_it_has_been_voted
   after_save :update_questions_counter
   after_save :update_prompt_queue
+  after_save :fixed_counter_cache
 
   attr_protected :prompts_count, :wins, :losses, :score, :prompts_on_the_right_count, :prompts_on_the_left_count
-  attr_readonly :question_id
   attr_accessor :part_of_batch_create
+
+  def cant_change_question_if_it_has_been_voted
+    if self.question_id_changed? && self.has_votes?
+      self.question_id = self.question_id_was
+    end
+  end
 
   def update_questions_counter
     unless part_of_batch_create
       self.question.update_attribute(:inactive_choices_count, self.question.choices.inactive.length)
     end
   end 
+
+  def fixed_counter_cache
+    if self.question_id_changed?
+      Question.update_counters(self.question_id_was, :choices_count => -1) if self.question_id_was
+      Question.update_counters(self.question_id, :choices_count => 1) if self.question_id
+    end
+  end
 
   # if changing a choice to active, we want to regenerate prompts
   def update_prompt_queue
@@ -64,6 +78,10 @@ class Choice < ActiveRecord::Base
     return true #so active record will save
   end
   
+  def has_votes?
+    !(wins.zero? && losses.zero?)
+  end
+
   def compute_score
     (wins.to_f+1)/(wins+1+losses+1) * 100
   end
