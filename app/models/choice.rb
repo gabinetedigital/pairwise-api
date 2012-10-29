@@ -12,8 +12,8 @@ class Choice < ActiveRecord::Base
   has_many :votes
   has_many :losing_votes, :class_name => "Vote", :foreign_key => "loser_choice_id"
   has_many :flags
-  has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id"
-  has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id"
+  has_many :prompts_on_the_left, :class_name => "Prompt", :foreign_key => "left_choice_id", :inverse_of => :left_choice
+  has_many :prompts_on_the_right, :class_name => "Prompt", :foreign_key => "right_choice_id", :inverse_of => :right_choice
 
 
   has_many :appearances_on_the_left, :through => :prompts_on_the_left, :source => :appearances

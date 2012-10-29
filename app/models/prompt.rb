@@ -7,8 +7,8 @@ class Prompt < ActiveRecord::Base
   
   
   belongs_to :question, :counter_cache => true
-  belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id", :counter_cache => :prompts_on_the_left_count
-  belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id", :counter_cache => :prompts_on_the_right_count
+  belongs_to :left_choice, :class_name => "Choice", :foreign_key => "left_choice_id", :counter_cache => :prompts_on_the_left_count, :inverse_of => :prompts_on_the_left
+  belongs_to :right_choice, :class_name => "Choice", :foreign_key => "right_choice_id", :counter_cache => :prompts_on_the_right_count, :inverse_of => :prompts_on_the_right
   
   validates_presence_of :left_choice, :on => :create, :message => "can't be blank"
   validates_presence_of :right_choice, :on => :create, :message => "can't be blank"
@@ -43,6 +43,10 @@ class Prompt < ActiveRecord::Base
     left_choice.data
   end
   
+  def left_choice_creator_id(prompt = nil)
+    left_choice.creator_id
+  end
+  
   def active?
     left_choice.active? and right_choice.active?
   end
@@ -50,6 +54,10 @@ class Prompt < ActiveRecord::Base
   
   def right_choice_text(prompt = nil)
     right_choice.data
+  end
+  
+  def right_choice_creator_id(prompt = nil)
+    right_choice.creator_id
   end
   
 end
