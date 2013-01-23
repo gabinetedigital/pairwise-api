@@ -32,6 +32,9 @@ class ChoicesController < InheritedResources::Base
       format.xml { render :xml => @choices.to_xml(:only => [ :data, :score, :id, :active, :created_at, :wins, :losses], :methods => :user_created)}
     end
 
+    @question = nil #<=======
+    @choices = nil #<=======
+
   end
   
   def votes
@@ -106,6 +109,10 @@ class ChoicesController < InheritedResources::Base
       format.xml { render :xml => @choice.to_xml(response_options) }
       format.json { render :json => @choice.to_json(response_options) }
     end
+
+    @question = nil #<=======
+    @choice = nil #<=======
+
   end
 
 

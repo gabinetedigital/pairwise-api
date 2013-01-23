@@ -1,3 +1,5 @@
+include ObjectSpace
+
 class PromptsController < InheritedResources::Base
   respond_to :xml, :json
   actions :show
@@ -12,6 +14,8 @@ class PromptsController < InheritedResources::Base
     # After recording vote, next prompt display parameters:
     #   same as in show  - :with_prompt, with_appearance, with visitor_stats, etc
   def vote
+
+
     @question = current_user.questions.find(params[:question_id])
     @prompt = @question.prompts.find(params[:id])
     
@@ -36,6 +40,19 @@ class PromptsController < InheritedResources::Base
        end
     end
 
+    logger.info "==========================================================================================="
+    types = Hash.new(0)
+    logger.info ObjectSpace.each_object(Class).count
+    ObjectSpace.each_object(Class) do |obj|
+        types[obj.name]+=1
+    end
+    types.each do |t|
+        if t[1] > 1 
+            logger.info t
+        end
+    end
+    logger.info "==========================================================================================="
+
     respond_to do |format|
       if !successful.nil?
         format.xml { render :xml => object.to_xml(:procs => optional_information , :methods => [:left_choice_text, :right_choice_text]), :status => :ok }
@@ -45,6 +62,11 @@ class PromptsController < InheritedResources::Base
         format.json { render :json => @prompt.to_xml, :status => :unprocessable_entity }
       end
     end
+    
+    object = nil #<====
+    @question = nil #<=======
+    @prompt = nil #<======
+
   end
   
   def skip
@@ -82,6 +104,8 @@ class PromptsController < InheritedResources::Base
         format.json { render :json => @prompt.to_xml, :status => :unprocessable_entity }
       end
     end
+    @question = nil #<=======
+    @prompt = nil #<======
   end
 
   def show
@@ -91,6 +115,8 @@ class PromptsController < InheritedResources::Base
       format.xml { render :xml => @prompt.to_xml(:methods => [:left_choice_text, :right_choice_text, :right_choice_creator_id, :left_choice_creator_id])}
       format.json { render :json => @prompt.to_json(:methods => [:left_choice_text, :right_choice_text, :right_choice_creator_id, :left_choice_creator_id])}
     end
+    @question = nil #<=======
+    @prompt = nil #<======
   end
 
   
